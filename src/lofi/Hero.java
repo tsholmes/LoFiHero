@@ -8,13 +8,15 @@ import lofi.Animation.AnimationHandle;
 import lofi.Game.Key;
 
 public class Hero extends Entity {
-	public static final int WIDTH = 16;
-	public static final int HEIGHT = 24;
-	public static final int DASH_TIME = 6;
-	public static final int DASH_SPEED = 8;
-	public static final int DASH_DIAG_SPEED = 6;
-	public static final int JUMP_SPEED = 9;
-	public static final int MAX_FALL_SPEED = 12;
+	public static final double WIDTH = 16;
+	public static final double HEIGHT = 24;
+	public static final int DASH_TIME = 16;
+	public static final double DASH_SPEED = 10;
+	public static final double DASH_DIAG_SPEED = 7;
+	public static final double JUMP_SPEED = 9;
+	public static final double MAX_FALL_SPEED = 12;
+	public static final int MAX_KNOCKBACK_TIMER = 10;
+	public static final double KNOCKBACK_SPEED = 8;
 
 	public AnimationHandle heroWalkRight = Res.heroWalkRight.createHandle();
 	public AnimationHandle heroWalkLeft = Res.heroWalkLeft.createHandle();
@@ -60,8 +62,12 @@ public class Hero extends Entity {
 	public boolean canDash = false;
 	public int swingTimer = 0;
 
+	public boolean doDash = false;
+
 	public int swordX = 0;
 	public int swordY = 0;
+
+	public int knockbackTimer = 0;
 
 	public AnimationHandle heroAnimation = heroWalkRight;
 	public AnimationHandle swordAnimation = swordCarryRight;
@@ -172,9 +178,23 @@ public class Hero extends Entity {
 			}
 		}
 
+		if (knockbackTimer >= MAX_KNOCKBACK_TIMER / 2 && dash == 0) {
+			if (vx > 0) {
+				heroAnimation = heroIdleRight;
+			} else {
+				heroAnimation = heroIdleLeft;
+			}
+		}
+
 		if (g2 != null) {
+			if (knockbackTimer % 4 > 1 || dash % 2 == 1) {
+				g2.setXORMode(Color.red);
+			}
 			heroAnimation.paint(g2, X(), Y());
 			swordAnimation.paint(g2, X() + swordX, Y() + swordY);
+			if (knockbackTimer % 4 > 1 || dash % 2 == 1) {
+				g2.setPaintMode();
+			}
 
 			if (LoFiHeroGame.DEBUG) {
 				g2.setColor(Color.magenta);
@@ -192,7 +212,7 @@ public class Hero extends Entity {
 	public void update(Game game) {
 		fallThrough = false;
 
-		if (dash == 0) {
+		if (dash == 0 && knockbackTimer < MAX_KNOCKBACK_TIMER / 2) {
 			if (game.isKeyDown(Key.Down) && ground) {
 				fallThrough = true;
 			}
@@ -212,12 +232,14 @@ public class Hero extends Entity {
 				}
 				right = false;
 			} else {
-				vx -= Math.signum(vx);
+				vx *= 0.8;
+				if (Math.abs(vx) < 0.8)
+					vx = 0;
 			}
 			if (game.isKeyDown(Key.Up) && ground) {
 				vy = -JUMP_SPEED - 1;
 			}
-			if (swingTimer > 0 && !game.isKeyDown(Key.Space) && groundDash && canDash) {
+			if (swingTimer == 0 && groundDash && doDash) {
 				if (game.isKeyDown(Key.Up)) {
 					dashY = -1;
 				} else if (game.isKeyDown(Key.Down)) {
@@ -238,13 +260,19 @@ public class Hero extends Entity {
 					dash = DASH_TIME;
 					swingTimer = 0;
 				}
+				doDash = false;
 			}
-			if (game.isKeyDown(Key.Space) && swingTimer == 0 && canAttack) {
+			if (game.isKeyPressed(Key.Space) && swingTimer == 0 && canAttack) {
 				swingTimer = 4;
 				swordSwingRight.reset();
 				swordSwingLeft.reset();
-				canDash = true;
+				doDash = true;
 			}
+		}
+
+		if (!game.isKeyDown(Key.Space)) {
+			doDash = false;
+			dash = 0;
 		}
 
 		if (dash > 0) {
@@ -258,7 +286,6 @@ public class Hero extends Entity {
 			if (dashY > 0) {
 				fallThrough = true;
 			}
-			canAttack = false;
 			groundDash = false;
 			dash--;
 		}
@@ -266,10 +293,13 @@ public class Hero extends Entity {
 		if (swingTimer > 0) {
 			swingTimer--;
 			canAttack = false;
-			if (swingTimer == 0 && game.isKeyDown(Key.Space)) {
-				swingTimer = 4;
-				canDash = false;
+			if (swingTimer == 0 && !groundDash) {
+				doDash = false;
 			}
+		}
+
+		if (knockbackTimer > 0) {
+			knockbackTimer--;
 		}
 
 		canAttack = swingTimer == 0 && dash == 0;
@@ -308,6 +338,18 @@ public class Hero extends Entity {
 
 	@Override
 	public Rectangle getBox() {
-		return new Rectangle(X() + 3, Y() + 3, WIDTH - 6, HEIGHT - 6);
+		return new Rectangle(X() + (int) (WIDTH / 2), Y() + (int) (HEIGHT / 2)
+				- 2, 1, 4);
+	}
+
+	public void hit(Rectangle box) {
+		if (dash > 0 || knockbackTimer > 0)
+			return;
+		if (box.intersects(getBox())) {
+			knockbackTimer = MAX_KNOCKBACK_TIMER;
+			double angle = Math.random() * Math.PI;
+			vx = Math.cos(angle) * KNOCKBACK_SPEED;
+			vy = -Math.sin(angle) * KNOCKBACK_SPEED;
+		}
 	}
 }

@@ -46,7 +46,7 @@ public class Blood extends Entity {
 			vy = Math.min(vy, MAX_FALL_SPEED / 3);
 		}
 
-		fallThrough = ground;
+		fallThrough = ground && Math.random() < 0.5;
 	}
 
 	@Override

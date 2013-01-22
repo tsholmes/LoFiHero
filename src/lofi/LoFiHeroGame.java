@@ -8,7 +8,7 @@ import java.util.HashSet;
 public class LoFiHeroGame extends Game {
 
 	public static final boolean DEBUG = false;
-	public static final double SPAWN_CHANCE = 0.1;
+	public static final double SPAWN_CHANCE = 0.05;
 
 	public static final int WIDTH = 319;
 	public static final int HEIGHT = 239;
@@ -73,6 +73,9 @@ public class LoFiHeroGame extends Game {
 		hero.update(this);
 		for (Enemy enemy : enemies) {
 			enemy.update(this);
+			if (enemy.knockbackTimer == 0) {
+				hero.hit(enemy.getBox());
+			}
 		}
 		for (Blood b : blood) {
 			b.update(this);
@@ -82,7 +85,7 @@ public class LoFiHeroGame extends Game {
 
 		if (sword != null) {
 			for (Enemy enemy : enemies) {
-				if (enemy.attack(sword)) {
+				if (enemy.attack(sword, hero.x + hero.width / 2.0, hero.y + hero.height / 2.0)) {
 					for (int i = 0; i < BLOOD_HIT_COUNT; i++) {
 						Blood b = new Blood(enemy.x, enemy.y);
 						blood.add(b);
@@ -107,7 +110,7 @@ public class LoFiHeroGame extends Game {
 				if (bloodMode && enemy.health > 0) {
 					enemy.health = 0;
 					enemy.knockbackTimer = 0;
-					enemy.attack(enemy.getBox());
+					enemy.attack(enemy.getBox(), enemy.x + enemy.width / 2.0, enemy.y + enemy.height);
 					enemy.knockbackTimer += Math.random()
 							* Enemy.MAX_KNOCKBACK_TIMER;
 				}

@@ -8,11 +8,11 @@ import lofi.Animation.AnimationHandle;
 
 public class Slime extends Enemy {
 
-	public static final int WIDTH = 16;
-	public static final int HEIGHT = 16;
-	public static final int MAX_ACTION_TIMER = 50;
-	public static final int JUMP_SPEED = 10;
-	public static final int HORIZ_SPEED = 4;
+	public static final double WIDTH = 16;
+	public static final double HEIGHT = 16;
+	public static final int MAX_ACTION_TIMER = 10;
+	public static final double JUMP_SPEED = 10;
+	public static final double HORIZ_SPEED = 4;
 	public static final int MAX_HEALTH = 3;
 
 	public AnimationHandle slimeIdle = Res.slimeIdle.createHandle();
@@ -72,27 +72,34 @@ public class Slime extends Enemy {
 				fallThrough = true;
 			}
 
+			Rectangle box = getBox();
+			Rectangle tbox = target.getBox();
+
 			double xdif = 0;
-			if (x + width < target.x) {
-				xdif = target.x - (x + width);
-			} else if (x > target.x + target.width) {
-				xdif = (target.x + target.width) - x;
-			}
+			/*
+			 * if (box.getMaxX() < tbox.getMinX()) { xdif = tbox.getMinX() -
+			 * box.getMaxX(); } else if (box.getMinX() > tbox.getMaxX()) { xdif
+			 * = tbox.getMaxX() - box.getMinX(); }
+			 */
+			xdif = tbox.getCenterX() - box.getCenterX();
 
 			double ydif = 0;
-			if (y + height < target.y) {
-				ydif = target.y - (y + height);
-			} else if (y > target.y + target.height) {
-				ydif = (target.y + target.height) - y;
-			}
+			/*
+			 * if (box.getMaxY() < tbox.getMinY()) { ydif = tbox.getMinY() -
+			 * box.getMaxY(); } else if (box.getMinY() > tbox.getMaxY()) { ydif
+			 * = tbox.getMaxY() - box.getMinY(); }
+			 */
+			ydif = tbox.getCenterY() - box.getCenterY();
 
 			if (ydif > 0) {
 				if (Math.abs(xdif) >= Math.abs(ydif)) {
 					vy = -JUMP_SPEED;
 					if (xdif > 0) {
-						vx = HORIZ_SPEED;
+						vx = Math.min(xdif / 20, HORIZ_SPEED);
+						// vx = HORIZ_SPEED;
 					} else if (xdif < 0) {
-						vx = -HORIZ_SPEED;
+						vx = Math.max(xdif / 20, -HORIZ_SPEED);
+						// vx = -HORIZ_SPEED;
 					}
 				} else {
 					fallThrough = true;
@@ -100,9 +107,11 @@ public class Slime extends Enemy {
 			} else {
 				vy = -JUMP_SPEED;
 				if (xdif > 0) {
-					vx = HORIZ_SPEED;
+					vx = Math.min(xdif / 20, HORIZ_SPEED);
+					// vx = HORIZ_SPEED;
 				} else if (xdif < 0) {
-					vx = -HORIZ_SPEED;
+					vx = Math.max(xdif / 20, -HORIZ_SPEED);
+					// vx = -HORIZ_SPEED;
 				}
 			}
 		}
@@ -113,7 +122,8 @@ public class Slime extends Enemy {
 
 	@Override
 	public Rectangle getBox() {
-		return new Rectangle(X() + 1, Y() + 4, WIDTH - 2, HEIGHT - 4);
+		return new Rectangle(X() + 3, Y() + 8, (int) WIDTH - 7,
+				(int) HEIGHT - 12);
 	}
 
 }

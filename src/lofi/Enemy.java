@@ -5,12 +5,12 @@ import java.awt.Rectangle;
 public abstract class Enemy extends Entity {
 
 	public static final int MAX_KNOCKBACK_TIMER = 10;
-	public static final int KNOCKBACK_SPEED = 8;
+	public static final double KNOCKBACK_SPEED = 8;
 
 	public int knockbackTimer = 0;
 	public int health;
 
-	public Enemy(int width, int height, int health) {
+	public Enemy(double width, double height, int health) {
 		super(width, height);
 		this.health = health;
 	}
@@ -24,19 +24,26 @@ public abstract class Enemy extends Entity {
 		}
 	}
 
-	public boolean attack(Rectangle swordBox) {
+	public boolean attack(Rectangle swordBox, double sx, double sy) {
 		if (knockbackTimer > MAX_KNOCKBACK_TIMER / 2)
 			return false;
 		if (swordBox.intersects(getBox())) {
 			knockbackTimer = MAX_KNOCKBACK_TIMER;
+			
+			double dx = x + width / 2.0 - sx;
+			double dy = -Math.abs(dx) * 2 - 1;
+			double dist = Math.hypot(dx,dy);
+			
+			dx /= dist;
+			dy /= dist;
+			
+			vx = dx * KNOCKBACK_SPEED;
+			vy = dy * KNOCKBACK_SPEED;
 
-			double angle = (Math.random() * 0.5 + 0.25) * Math.PI;
+			/*double angle = (Math.random() * 0.5 + 0.25) * Math.PI;
 
-			int x = (int) (Math.cos(angle) * KNOCKBACK_SPEED);
-			int y = (int) (Math.sin(angle) * KNOCKBACK_SPEED);
-
-			vx = x;
-			vy = -y;
+			vx = Math.cos(angle) * KNOCKBACK_SPEED;
+			vy = -Math.sin(angle) * KNOCKBACK_SPEED;*/
 			
 			health--;
 			

@@ -14,10 +14,10 @@ public abstract class Entity {
 	public boolean fallThrough = false;
 	public boolean gravity = true;
 
-	public final int width;
-	public final int height;
+	public final double width;
+	public final double height;
 
-	public Entity(int width, int height) {
+	public Entity(double width, double height) {
 		this.width = width;
 		this.height = height;
 	}
